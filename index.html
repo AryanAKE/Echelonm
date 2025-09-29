@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echelon Media - Full Website</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <style>
+        /* Import custom font */
+        @import url('https://fonts.cdnfonts.com/css/coolvetica');
+
+        /* --- Base Styles & Light Theme --- */
+        :root {
+            --metallic-grey: #6c757d; /* Softer dark grey for sub-text */
+            --dark-grey: #212529;     /* Main text color */
+            --light-grey: #f8f9fa;   /* Main background color */
+            
+            --background-color: #FFFFFF;
+            --surface-color: #f8f9fa; /* Card and section background */
+            --text-color: #212529;    /* Primary text color */
+            --accent-green: #1a4a43;
+            --border-color: #e9ecef;
+        }
+
+        body {
+            font-family: 'Coolvetica', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- Loading Screen --- */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-content h1 { font-size: 2.5rem; font-weight: 700; color: var(--text-color); margin-bottom: 1.5rem; letter-spacing: 2px; }
+        .loader-content p { font-size: 1rem; color: var(--metallic-grey); letter-spacing: 1.5px; }
+        .loading-dots { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+        .loading-dots div { width: 12px; height: 12px; background-color: var(--metallic-grey); border-radius: 50%; margin: 0 5px; animation: bounce 1.4s infinite ease-in-out both; }
+        .loading-dots .dot1 { animation-delay: -0.32s; }
+        .loading-dots .dot2 { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+        /* --- Navigation Bar --- */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: transform 0.6s ease-out, background-color 0.4s ease-in-out;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar.visible { transform: translateY(0); }
+        body.scrolled-past-hero .navbar { background: rgba(255, 255, 255, 0.85); border-bottom: 1px solid var(--border-color); }
+        .navbar-brand img { height: 40px; }
+        .navbar-nav .nav-link { color: var(--text-color); font-weight: 500; margin: 0 1rem; position: relative; transition: color 0.3s; }
+        .navbar-nav .nav-link:hover { color: #000; }
+        .navbar-nav .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 50%; transform: translateX(-50%); background-color: var(--text-color); transition: width 0.3s ease-out; }
+        .navbar-nav .nav-link:hover::after { width: 100%; }
+        body.scrolled-past-hero .navbar-nav .nav-link { color: var(--text-color); }
+        body.scrolled-past-hero .navbar-nav .nav-link:hover { color: #000; }
+        .navbar-toggler { border-color: rgba(0, 0, 0, 0.1); }
+        .navbar-toggler-icon { --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2833, 37, 41, 0.7%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"); }
+
+        /* --- Hero Section --- */
+        .hero-section { position: sticky; top: 0; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #intro-video-container { position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), width 0.8s cubic-bezier(0.25, 1, 0.5, 1), height 0.8s cubic-bezier(0.25, 1, 0.5, 1); z-index: 5; }
+        #intro-video { width: 100vw; height: 100vh; object-fit: cover; transition: opacity 0.5s ease; max-width: none; }
+        #hero-content-container { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem; z-index: 10; }
+        .hero-text { text-align: left; opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s; }
+        .hero-text h1 { font-size: 4rem; font-weight: 900; margin-bottom: 1rem; color: var(--dark-grey); text-shadow: none; }
+        .animated-text-container { font-size: 2.5rem; font-weight: 300; color: var(--dark-grey); text-shadow: none; }
+        .static-text { font-weight: 700; color: var(--dark-grey); }
+        .glitch-text { position: relative; display: inline-block; }
+        .glitch-text.glitch::before, .glitch-text.glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }
+        .glitch-text.glitch::before { left: 2px; text-shadow: -2px 0 var(--metallic-grey); animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch-text.glitch::after { left: -2px; text-shadow: -2px 0 #444, 2px 2px #444; animation: glitch-anim-2 2s infinite linear alternate-reverse; }
+        @keyframes glitch-anim-1 { 0% { clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%); } 10% { clip-path: polygon(0 15%, 100% 15%, 100% 20%, 0 20%); } 20% { clip-path: polygon(0 10%, 100% 10%, 100% 20%, 0 20%); } 30% { clip-path: polygon(0 30%, 100% 30%, 100% 35%, 0 35%); } 40% { clip-path: polygon(0 50%, 100% 50%, 100% 55%, 0 55%); } 50% { clip-path: polygon(0 70%, 100% 70%, 100% 75%, 0 75%); } 60% { clip-path: polygon(0 80%, 100% 80%, 100% 85%, 0 85%); } 70% { clip-path: polygon(0 50%, 100% 50%, 100% 55%, 0 55%); } 80% { clip-path: polygon(0 25%, 100% 25%, 100% 30%, 0 30%); } 90% { clip-path: polygon(0 60%, 100% 60%, 100% 65%, 0 65%); } 100% { clip-path: polygon(0 40%, 100% 40%, 100% 45%, 0 45%); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: polygon(0 5%, 100% 5%, 100% 10%, 0 10%); } 10% { clip-path: polygon(0 20%, 100% 20%, 100% 25%, 0 25%); } 20% { clip-path: polygon(0 40%, 100% 40%, 100% 45%, 0 45%); } 30% { clip-path: polygon(0 60%, 100% 60%, 100% 65%, 0 65%); } 40% { clip-path: polygon(0 80%, 100% 80%, 100% 85%, 0 85%); } 50% { clip-path: polygon(0 30%, 100% 30%, 100% 35%, 0 35%); } 60% { clip-path: polygon(0 55%, 100% 55%, 100% 60%, 0 60%); } 70% { clip-path: polygon(0 10%, 100% 10%, 100% 15%, 0 15%); } 80% { clip-path: polygon(0 75%, 100% 75%, 100% 80%, 0 80%); } 90% { clip-path: polygon(0 90%, 100% 90%, 100% 95%, 0 95%); } 100% { clip-path: polygon(0 45%, 100% 45%, 100% 50%, 0 50%); } }
+
+        /* --- Scroll Triggered Animations --- */
+        body.scrolled #intro-video-container { transform: translateX(-25vw); }
+        body.scrolled .hero-text { opacity: 1; transform: translateY(0); }
+        
+        .main-content { position: relative; z-index: 50; background-color: var(--background-color); }
+
+        /* --- Services Sections --- */
+        .content-section { padding: 120px 0; border-bottom: 1px solid var(--border-color); }
+        .content-section:last-of-type { border-bottom: none; }
+        .content-section h2 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-color); }
+        .content-section .lead { font-size: 1.2rem; max-width: 700px; margin: 0 auto 4rem auto; color: var(--metallic-grey); font-weight: 300; }
+
+        /* Generic Card Styling */
+        .service-card { background-color: var(--surface-color); border-radius: 16px; padding: 1.5rem; height: 100%; border: 1px solid var(--border-color); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .service-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); border-color: #ced4da; }
+        .service-card img { border-radius: 10px; margin-bottom: 1.5rem; width: 100%; height: 220px; object-fit: cover; }
+        .service-card h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-color); }
+        .service-card p { color: var(--metallic-grey); font-weight: 300; line-height: 1.6; }
+        .testimonial-card { background-color: var(--accent-green); color: white; padding: 2.5rem; }
+        .testimonial-card p { font-size: 1.3rem; font-weight: 400; line-height: 1.7; color: white; }
+        .testimonial-card .author { margin-top: 2rem; font-weight: 700; opacity: 0.8; }
+
+        /* --- Graphic Design Slider --- */
+        .sliding-cards-container { position: relative; width: 100%; padding: 2rem 0; overflow: hidden; }
+        .sliding-cards-container::before, .sliding-cards-container::after { content: ''; position: absolute; top: 0; width: 200px; height: 100%; z-index: 2; pointer-events: none; }
+        .sliding-cards-container::before { left: 0; background: linear-gradient(to right, var(--background-color) 20%, rgba(255,255,255,0) 100%); }
+        .sliding-cards-container::after { right: 0; background: linear-gradient(to left, var(--background-color) 20%, rgba(255,255,255,0) 100%); }
+        .sliding-track { display: flex; width: calc(420px * 8); animation: slide 60s linear infinite; }
+        .sliding-track:hover { animation-play-state: paused; }
+        @keyframes slide { from { transform: translateX(0); } to { transform: translateX(calc(-420px * 4)); } }
+        .slide-card { width: 390px; margin: 0 15px; flex-shrink: 0; }
+
+        /* --- Web Development Collage --- */
+        #web-development { padding-top: 150px; padding-bottom: 150px; } /* Added spacing */
+        .web-dev-collage { position: relative; height: 550px; margin-top: 3rem; }
+        .collage-card { position: absolute; background-color: var(--surface-color); border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--border-color); overflow: hidden; transition: transform 0.4s ease, box-shadow 0.4s ease; }
+        .collage-card:hover { transform: scale(1.03) rotate(-1deg); box-shadow: 0 25px 50px rgba(0,0,0,0.15); z-index: 10; }
+        .card-large { width: 70%; height: 75%; top: 0; left: 0; padding: 2rem; }
+        .card-large img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+        .card-small { width: 40%; height: 40%; top: 10%; right: -5%; padding: 1.5rem; text-align: center; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+        .card-medium { width: 50%; height: 50%; bottom: 0; right: 5%; padding: 1.5rem; }
+        .card-medium .chart-bar { background-color: var(--accent-green); border-radius: 4px; transition: height 0.5s ease-out; }
+        .clients-section { margin-top: 3rem; text-align: left; }
+        .clients-section h5 { color: var(--metallic-grey); font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; }
+        .client-logos { display: flex; flex-wrap: wrap; gap: 2.5rem; align-items: center; filter: grayscale(100%) opacity(0.7); }
+        .client-logos svg { height: 25px; width: auto; fill: var(--text-color); }
+        
+        /* --- Meet The Team Section --- */
+        #meet-the-team { background-color: var(--surface-color); }
+        .team-container { display: flex; min-height: 500px; gap: 2rem; align-items: center; }
+        .team-thumbnails { flex: 0 0 100px; display: flex; flex-direction: column; gap: 1rem; }
+        .team-thumbnail { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 3px solid transparent; filter: saturate(0); transform: scale(0.95); transition: all 0.4s ease; }
+        .team-thumbnail:hover { filter: saturate(1); transform: scale(1); }
+        .team-thumbnail.active { filter: saturate(1); transform: scale(1); border-color: var(--text-color); box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); }
+        .team-display { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+        
+        .large-image-container, .details-container { position: relative; }
+        .large-image-container { padding-top: 125%; }
+        .details-container { align-self: stretch; }
+
+        .large-image-wrapper, .details-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .large-image-wrapper { opacity: 0; transform: scale(0.95); }
+        .large-image-wrapper.active { opacity: 1; transform: scale(1); }
+        .team-large-image { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+
+        .details-wrapper {
+            opacity: 0;
+            transform: translateY(20px);
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .details-wrapper.active { opacity: 1; transform: translateY(0); }
+        .details-wrapper h3 { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-color); }
+        .details-wrapper h5 { font-size: 1.1rem; color: var(--metallic-grey); font-weight: 500; margin-bottom: 1.5rem; }
+        .details-wrapper p { font-size: 1rem; line-height: 1.7; color: var(--text-color); }
+        .team-member-content { display: none; }
+
+        /* --- Footer --- */
+        footer {
+            padding: 4rem 2rem 2rem;
+            background-color: #181818;
+            text-align: center;
+            border-top: 1px solid #2a2a2a;
+        }
+        .footer-content p {
+            margin: 0;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .footer-content .designer-name {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+
+        /* Button Styling */
+        .explore-btn { display: inline-block; margin-top: 3rem; padding: 14px 35px; background-color: var(--text-color); color: var(--background-color); font-weight: 700; border-radius: 50px; text-decoration: none; transition: background-color 0.3s, transform 0.3s; }
+        .explore-btn:hover { background-color: #000; transform: translateY(-3px); }
+
+        /* --- Animation on Scroll --- */
+        .animated-item { 
+            opacity: 0; 
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .is-visible .animated-item { 
+            opacity: 1; 
+            transform: translateY(0);
+        }
+        
+        /* Staggered delays for children of .animated-section */
+        .animated-section.is-visible .animated-item:nth-child(1) { transition-delay: 0.1s; }
+        .animated-section.is-visible .animated-item:nth-child(2) { transition-delay: 0.2s; }
+        .animated-section.is-visible .animated-item:nth-child(3) { transition-delay: 0.3s; }
+        .animated-section.is-visible .animated-item:nth-child(4) { transition-delay: 0.4s; }
+        
+        .animated-section.is-visible .row .animated-item:nth-child(1) { transition-delay: 0.2s; }
+        .animated-section.is-visible .row .animated-item:nth-child(2) { transition-delay: 0.3s; }
+        .animated-section.is-visible .row .animated-item:nth-child(3) { transition-delay: 0.4s; }
+        .animated-section.is-visible .row .animated-item:nth-child(4) { transition-delay: 0.5s; }
+
+        .animated-section.is-visible .web-dev-collage .animated-item:nth-child(1) { transition-delay: 0.2s; }
+        .animated-section.is-visible .web-dev-collage .animated-item:nth-child(2) { transition-delay: 0.4s; }
+        .animated-section.is-visible .web-dev-collage .animated-item:nth-child(3) { transition-delay: 0.3s; }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 992px) {
+            body.scrolled #intro-video-container { transform: translateY(-25vh) scale(0.8); width: 100vw; height: 50vh; }
+            #hero-content-container { flex-direction: column; justify-content: flex-end; padding-bottom: 15vh; }
+            .hero-text { text-align: center; } .hero-text h1 { font-size: 3rem; } .animated-text-container { font-size: 1.8rem; }
+            .content-section h2 { font-size: 2.5rem; } .content-section .lead { font-size: 1.1rem; }
+            .web-dev-collage { height: auto; position: static; } /* Stack collage on mobile */
+            .collage-card { position: static; width: 100%; height: auto; margin-bottom: 1.5rem; }
+            .card-small, .card-medium, .card-large { right: 0; }
+            
+            /* --- Responsive Team Section --- */
+            .team-container { flex-direction: column; gap: 0; }
+            .team-thumbnails { flex-direction: row; justify-content: center; margin-bottom: 2rem; flex: 0 0 auto; flex-wrap: wrap; }
+            .team-display { display: block; } 
+            .large-image-container { padding-top: 0; max-width: 350px; margin: 0 auto 2rem auto; }
+            .large-image-wrapper { display: none; } /* Hide all by default */
+            .large-image-wrapper.active { display: block; position: static; opacity: 1; transform: none; }
+            .details-container { height: auto; }
+            .details-wrapper { display: none; } /* Hide all by default */
+            .details-wrapper.active { display: flex; position: static; opacity: 1; transform: none; text-align: center; }
+            .details-wrapper h3 { font-size: 2rem; }
+        }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 0.8rem 1rem; } .navbar-brand img { height: 35px; }
+            .hero-text h1 { font-size: 2.5rem; } .animated-text-container { font-size: 1.5rem; }
+            body.scrolled #intro-video-container { transform: translateY(-30vh) scale(0.7); height: 40vh; }
+            .team-thumbnail { width: 65px; height: 65px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-content text-center">
+            <h1>Echelon Media</h1>
+            <div class="loading-dots"> <div class="dot1"></div> <div class="dot2"></div> <div class="dot3"></div> </div>
+            <p>Loading Experience</p>
+        </div>
+    </div>
+    
+    <!-- 2. Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><img src="assets/img/echelon logo trans.png" alt="Echelon Media Logo" onerror="this.onerror=null;this.src='https://placehold.co/150x50/0F0F0F/E0E0E0?text=ECHELON';"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#what-we-do">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 3. Hero Section -->
+    <div class="hero-section">
+        <div id="intro-video-container">
+            <video id="intro-video" muted playsinline loop><source src="assets/video/herovdo.mp4" type="video/mp4">Your browser does not support the video tag.</video>
+        </div>
+        <div id="hero-content-container">
+             <div class="container">
+                 <div class="row align-items-center">
+                     <div class="col-lg-7"></div>
+                     <div class="col-lg-5">
+                         <div class="hero-text">
+                             <h1>Echelon Media</h1>
+                             <div class="animated-text-container"><span class="static-text">We</span> <span class="glitch-text" id="changing-word" data-text="Create">Create</span></div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Wrapper -->
+    <div class="main-content">
+
+        <!-- 4. What We Do Section -->
+        <section id="what-we-do" class="content-section text-center animated-section">
+            <div class="container">
+                <h2 class="animated-item">What We Do</h2>
+                <p class="lead animated-item">Echelon Media specializes in crafting compelling digital narratives. From breathtaking visual production to strategic brand amplification, we blend creativity with technology to deliver experiences that captivate and inspire action.</p>
+            </div>
+        </section>
+        
+        <div id="services"></div>
+
+        <!-- 5. Video Editing Section -->
+        <section id="video-editing" class="content-section animated-section">
+            <div class="container text-center">
+                <div class="animated-item">
+                    <h2>Video Editing</h2>
+                    <p class="lead">At the core of our craft is a commitment to data-driven, visually stunning storytelling that drives results.</p>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-6 col-md-6 animated-item">
+                         <div class="service-card text-start">
+                             <img src="https://images.pexels.com/photos/4439901/pexels-photo-4439901.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Cinematic Production">
+                             <h3>Cinematic Production</h3>
+                             <p>High-fidelity video content engineered to capture attention and deliver your message with impact, from corporate to social.</p>
+                         </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 animated-item">
+                        <div class="service-card text-start">
+                             <img src="https://images.pexels.com/photos/7174433/pexels-photo-7174433.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Motion Graphics">
+                             <h3>Motion Graphics & VFX</h3>
+                             <p>Elevate your brand with captivating animations and visual effects that bring your creative vision to life and leave a lasting impression.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 animated-item">
+                        <div class="service-card text-start">
+                             <img src="https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Color Grading">
+                             <h3>Color Grading</h3>
+                             <p>We meticulously color grade every shot to evoke the right emotion and create a stunning, cohesive visual experience.</p>
+                        </div>
+                    </div>
+                     <div class="col-lg-6 col-md-6 animated-item">
+                        <div class="service-card text-start">
+                             <img src="https://images.pexels.com/photos/374710/pexels-photo-374710.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Sound Design">
+                             <h3>Sound Design & Mixing</h3>
+                             <p>Crystal clear audio is crucial. We provide professional sound design and mixing to ensure your message is heard loud and clear.</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="explore-btn animated-item">Explore Video Services</a>
+            </div>
+        </section>
+
+        <!-- 6. Graphic Design Section -->
+        <section id="graphic-design" class="content-section animated-section">
+            <div class="container-fluid text-center">
+                <h2 class="animated-item">Graphic Design</h2>
+                <p class="lead animated-item">Built to help the most ambitious businesses grow without limits through powerful, strategic design.</p>
+                <div class="sliding-cards-container animated-item">
+                    <div class="sliding-track">
+                        <!-- Original Cards -->
+                        <div class="slide-card"><div class="service-card testimonial-card text-start"><p>"Echelon's design team became the key to unlocking our company's full potential."</p><div class="author">Alexandre Champagne, CEO</div></div></div>
+                        <div class="slide-card"><div class="service-card text-start"><img src="https://images.pexels.com/photos/326503/pexels-photo-326503.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Brand Identity"><h3>Brand Identity</h3><p>We forge unforgettable brand identities, ensuring consistency and recognition across all platforms.</p></div></div>
+                        <div class="slide-card"><div class="service-card text-start"><img src="https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="UI/UX Design"><h3>UI/UX Design</h3><p>Our user-centric approach creates intuitive and beautiful digital experiences that delight users.</p></div></div>
+                        <div class="slide-card"><div class="service-card text-start"><img src="https://images.pexels.com/photos/39284/macbook-apple-imac-computer-39284.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Digital Assets"><h3>Digital Assets</h3><p>From social media graphics to digital ad campaigns, we create assets that stop the scroll.</p></div></div>
+                        <!-- Duplicated Cards for seamless loop -->
+                        <div class="slide-card"><div class="service-card testimonial-card text-start"><p>"Echelon's design team became the key to unlocking our company's full potential."</p><div class="author">Alexandre Champagne, CEO</div></div></div>
+                        <div class="slide-card"><div class="service-card text-start"><img src="https://images.pexels.com/photos/326503/pexels-photo-326503.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Brand Identity"><h3>Brand Identity</h3><p>We forge unforgettable brand identities, ensuring consistency and recognition across all platforms.</p></div></div>
+                        <div class="slide-card"><div class="service-card text-start"><img src="https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="UI/UX Design"><h3>UI/UX Design</h3><p>Our user-centric approach creates intuitive and beautiful digital experiences that delight users.</p></div></div>
+                        <div class="slide-card"><div class="service-card text-start"><img src="https://images.pexels.com/photos/39284/macbook-apple-imac-computer-39284.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Digital Assets"><h3>Digital Assets</h3><p>From social media graphics to digital ad campaigns, we create assets that stop the scroll.</p></div></div>
+                    </div>
+                </div>
+                <a href="#" class="explore-btn animated-item">Explore Design Services</a>
+            </div>
+        </section>
+        
+        <!-- 7. Web Development Section -->
+        <section id="web-development" class="content-section animated-section">
+            <div class="container"> 
+                 <div class="row g-5 align-items-center">
+                    <div class="col-lg-5">
+                        <div class="animated-item">
+                            <h2>Web Development</h2>
+                            <p class="lead text-start" style="margin-left: 0;">At the core of our work is a commitment to data-driven decision-making and intelligent engineering.</p>
+                        </div>
+                        <div class="clients-section animated-item">
+                            <h5>Trusted By</h5>
+                            <div class="client-logos">
+                                 <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>TechCrunch</title><path d="M11.996 18.528H12V5.514h-.004c-.455 0-.895.07-1.32.208-.94.31-1.745.94-2.31 1.745-.635.89-.965 1.98-.965 3.22v.06c0 1.255.33 2.33.975 3.225.565.805 1.37 1.435 2.31 1.745.425.135.865.21 1.32.21zm.004-14.568c4.05 0 7.35 3.3 7.35 7.35s-3.3 7.35-7.35 7.35-7.35-3.3-7.35-7.35 3.3-7.35 7.35-7.35zM2.4 12c0 5.3 4.3 9.6 9.6 9.6 5.3 0 9.6-4.3 9.6-9.6C21.6 6.7 17.3 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12zm13.155 1.575c.2-.18.3-.43.3-.705v-.06c0-.42-.21-.76-.58-1.02-.37-.255-1.035-.5-1.95-.675V8.97c1.32-.24 2.295-.87 2.895-1.845.6-1.005.915-2.28.915-3.825H15.9V2.4h-1.905v.9h-1.995v1.2H12v.015c.42 0 .825.06 1.215.18.93.315 1.725.96 2.295 1.785.63.885.96 1.965.96 3.21v.06c0 1.2-.33 2.25-.975 3.12-.57.81-1.365 1.44-2.295 1.755-.39.12-.795.18-1.215.18h-.015v2.85c.9-.165 1.575-.42 1.95-.675.375-.27.58-.615.58-1.035v-.06c0-.27-.09-.525-.285-.705zm-5.115 2.955c.945-.3 1.755-.93 2.325-1.74.63-.895.96-1.98.96-3.225v-.06c0-1.23-.33-2.31-.96-3.21-.57-.825-1.38-1.47-2.325-1.785a4.8 4.8 0 00-1.215-.18H12v12.03h-.004c-.42 0-.825-.06-1.215-.18z"/></svg>
+                                 <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Forbes</title><path d="M9.69 10.875c.34-.23.63-.49.88-.78L13.1 2.3H9.41L7.16 9.1c-.24-.1-.5-.2-.76-.2-.68 0-1.28.24-1.79.71-.5.48-.75 1.08-.75 1.81 0 .7.25 1.28.75 1.74.5.46 1.1.7 1.79.7.67 0 1.26-.24 1.78-.71.51-.48.77-1.07.77-1.78 0-.36-.07-.68-.2-.97zm8.13-8.575h-4.32l-2.02 6.55c.34.42.51.9.51 1.45 0 .24-.04.47-.12.67.62.66 1.46 1 2.5 1 1.23 0 2.24-.48 3.01-1.44l1.3-1.85-.3-2.92c-.03-.28-.05-.52-.05-.73 0-1.04-.3-1.8-1.9-2.23zm-3.8 19.4L11.9 14.1a3.02 3.02 0 0 0-1.02.7c-.5.47-.76 1.07-.76 1.8 0 .7.25 1.28.76 1.75.5.47 1.1.7 1.78.7.67 0 1.26-.24 1.77-.7.5-.48.76-1.08.76-1.81 0-.3-.04-.57-.14-.82l2.03 6.63h4.32L17.2 12.1a2.09 2.09 0 0 0 .11-.67c0-1.03-.36-1.83-1.08-2.41-.72-.58-1.63-.87-2.73-.87-1.34 0-2.5.44-3.46 1.33L7.9 2.3H3.58l6.18 19.4h4.26z"/></svg>
+                                 <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>VentureBeat</title><path d="M21.517 19.957h-1.92l-3.32-8.91-4.26 8.91H9.957l-4.26-8.91-3.32 8.91H.417L6.157 4h3.6l4.26 8.895L18.277 4h3.6l5.74 15.957z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="web-dev-collage">
+                            <div class="collage-card card-large animated-item">
+                                <img src="https://images.pexels.com/photos/39284/macbook-apple-imac-computer-39284.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Showcase of a website project">
+                            </div>
+                            <div class="collage-card card-small card-top-right animated-item">
+                                <h4 style="font-weight: 700; color: var(--text-color);">Growth</h4>
+                                <p style="font-size: 0.9rem; color: var(--metallic-grey);">Scalable solutions for ambitious brands.</p>
+                            </div>
+                            <div class="collage-card card-medium card-bottom-right animated-item">
+                                <h5 style="font-weight: 700; color: var(--text-color); margin-bottom: 1.5rem;">Optimize ROAS</h5>
+                                <div class="d-flex align-items-end justify-content-around h-75">
+                                    <div class="chart-bar" style="width: 25%; height: 40%;"></div>
+                                    <div class="chart-bar" style="width: 25%; height: 60%;"></div>
+                                    <div class="chart-bar" style="width: 25%; height: 85%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+                 <div class="text-center">
+                    <a href="#" class="explore-btn animated-item">Explore Web Services</a>
+                 </div>
+            </div>
+        </section>
+
+        <!-- 8. Meet The Team Section -->
+        <section id="meet-the-team" class="content-section animated-section">
+            <div class="container">
+                <div class="text-center animated-item">
+                    <h2>Meet The Team</h2>
+                    <p class="lead">The creative minds behind our award-winning work.</p>
+                </div>
+                <div class="team-container animated-item">
+                    <div class="team-thumbnails">
+                        <!-- Thumbnails will be generated by JS -->
+                    </div>
+                    <div class="team-display">
+                        <div class="large-image-container">
+                            <!-- Large images will be injected here -->
+                        </div>
+                        <div class="details-container">
+                            <!-- Details will be injected here -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Hidden data for team members -->
+                <div id="team-data" style="display: none;">
+                    <div class="team-member-content" data-member="1">
+                        <img class="team-large-image" src="https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team Member 1">
+                        <div class="details-content">
+                            <h3>Jacob Jones</h3>
+                            <h5>Lead Creative Director</h5>
+                            <p>"Unlimited, instant access to hundreds of premium quality resources created by designers for designers."</p>
+                        </div>
+                        <img class="team-thumbnail-src" src="https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team Member 1 Thumbnail">
+                    </div>
+                    <div class="team-member-content" data-member="2">
+                        <img class="team-large-image" src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team Member 2">
+                        <div class="details-content">
+                            <h3>Sarah Miller</h3>
+                            <h5>Head of Production</h5>
+                            <p>"We believe in storytelling that not only looks good but also performs. Every project is an opportunity to innovate."</p>
+                        </div>
+                        <img class="team-thumbnail-src" src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team Member 2 Thumbnail">
+                    </div>
+                    <div class="team-member-content" data-member="3">
+                        <img class="team-large-image" src="https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team Member 3">
+                        <div class="details-content">
+                            <h3>David Chen</h3>
+                            <h5>Senior Web Architect</h5>
+                            <p>"Functionality and aesthetics go hand-in-hand. We build digital experiences that are robust, intuitive, and beautiful."</p>
+                        </div>
+                        <img class="team-thumbnail-src" src="https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" alt="Team Member 3 Thumbnail">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+    </div>
+    
+    <!-- 9. Footer -->
+    <footer>
+        <div class="container footer-content">
+             <p>Designed by <span class="designer-name">Aryan Kumar Ekka</span></p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const introVideo = document.getElementById('intro-video');
+            const navbar = document.querySelector('.navbar');
+            const changingWord = document.getElementById('changing-word');
+
+            // --- 1. Loading Screen Logic ---
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                setTimeout(() => {
+                    var promise = introVideo.play();
+                    if (promise !== undefined) {
+                        promise.catch(error => { console.error("Autoplay was prevented:", error); });
+                    }
+                }, 1000);
+            }, 2000);
+
+            // --- 2. Navbar Logic ---
+            setTimeout(() => navbar.classList.add('visible'), 5000);
+            
+            // --- 3. Scroll Animation Logic ---
+            const heroSection = document.querySelector('.hero-section');
+            window.addEventListener('scroll', () => {
+                const scrollPosition = window.scrollY;
+                if (scrollPosition > 50) { document.body.classList.add('scrolled'); } 
+                else { document.body.classList.remove('scrolled'); }
+                
+                if (heroSection && scrollPosition > heroSection.offsetHeight - 100) { document.body.classList.add('scrolled-past-hero'); } 
+                else { document.body.classList.remove('scrolled-past-hero'); }
+            });
+
+            // --- 4. Changing Text Animation ---
+            const words = ["Create", "Inspire", "Amplify", "Succeed"];
+            let wordIndex = 0;
+            setInterval(() => {
+                wordIndex = (wordIndex + 1) % words.length;
+                const newWord = words[wordIndex];
+                changingWord.classList.add('glitch');
+                changingWord.textContent = newWord;
+                changingWord.dataset.text = newWord;
+                setTimeout(() => changingWord.classList.remove('glitch'), 500);
+            }, 3000);
+            
+            // --- 5. Intersection Observer for Content Animations ---
+            const animatedSections = document.querySelectorAll('.animated-section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, { threshold: 0.2 });
+            animatedSections.forEach(section => { observer.observe(section); });
+
+            // --- 6. Meet The Team Logic ---
+            const teamDataContainer = document.getElementById('team-data');
+            const teamMembers = teamDataContainer.querySelectorAll('.team-member-content');
+            const thumbnailsContainer = document.querySelector('.team-thumbnails');
+            const largeImageContainer = document.querySelector('.large-image-container');
+            const detailsContainer = document.querySelector('.details-container');
+
+            teamMembers.forEach((member, index) => {
+                const memberId = member.dataset.member;
+
+                const thumbSrc = member.querySelector('.team-thumbnail-src').src;
+                const thumb = document.createElement('img');
+                thumb.src = thumbSrc;
+                thumb.alt = `Team Member ${memberId} Thumbnail`;
+                thumb.className = 'team-thumbnail';
+                thumb.dataset.member = memberId;
+                thumbnailsContainer.appendChild(thumb);
+                
+                const largeImageWrapper = document.createElement('div');
+                largeImageWrapper.className = 'large-image-wrapper';
+                largeImageWrapper.dataset.member = memberId;
+                largeImageWrapper.appendChild(member.querySelector('.team-large-image').cloneNode(true));
+                largeImageContainer.appendChild(largeImageWrapper);
+
+                const detailsWrapper = document.createElement('div');
+                detailsWrapper.className = 'details-wrapper';
+                detailsWrapper.dataset.member = memberId;
+                detailsWrapper.appendChild(member.querySelector('.details-content').cloneNode(true));
+                detailsContainer.appendChild(detailsWrapper);
+
+                if(index === 0) {
+                    thumb.classList.add('active');
+                    largeImageWrapper.classList.add('active');
+                    detailsWrapper.classList.add('active');
+                }
+
+                const activateMember = () => {
+                    if (thumb.classList.contains('active')) return;
+
+                    thumbnailsContainer.querySelectorAll('.team-thumbnail').forEach(t => t.classList.remove('active'));
+                    largeImageContainer.querySelectorAll('.large-image-wrapper').forEach(w => w.classList.remove('active'));
+                    detailsContainer.querySelectorAll('.details-wrapper').forEach(d => d.classList.remove('active'));
+
+                    thumb.classList.add('active');
+                    largeImageContainer.querySelector(`.large-image-wrapper[data-member="${memberId}"]`).classList.add('active');
+                    detailsContainer.querySelector(`.details-wrapper[data-member="${memberId}"]`).classList.add('active');
+                };
+                
+                thumb.addEventListener('mouseover', activateMember);
+                thumb.addEventListener('click', activateMember);
+            });
+        });
+    </script>
+</body>
+</html>
+
+
